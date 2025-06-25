@@ -6,7 +6,7 @@ def route_packet() -> None:
 	Reroute packets from iface enp0s8 to iface enp0s9.
 	"""
     while True:
-        packet = sniff(iface="enp0s8", filter="not src host 192.168.56.101", count=1)[0]
+        packet = sniff(iface="enp0s8", filter="not ether src 08:00:27:f6:6d:7d", count=1)[0]
 
         packet[Ether].src = "08:00:27:70:76:f7"
         packet[Ether].dst = "08:00:27:71:77:f8"
