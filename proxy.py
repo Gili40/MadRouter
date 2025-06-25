@@ -18,26 +18,27 @@ def proxy() -> None:
 	Act as proxy server to hide Alice IP addr.
 	"""
 	while True:
-		packet = sniff(iface=[LEG1, LEG2], count=1)[0]
+		packet = sniff(iface=[LEG1, LEG2], filter=f"ip dst {LEG1_IP} or ip dst {LEG2_IP}", count=1)[0]
 		if packet.sniffed_on == LEG1:
 			# Assuming Alice is behind leg1
 			packet[Ether].src = LEG2_MAC
 			packet[Ether].dst = BOB_MAC
 			if IP in packet:
-			    packet[IP].src = LEG2_IP
-			    packet[IP].ttl -= 1
+				packet[IP].src = LEG2_IP
+				packet[IP].dst = BOB_IP
+				packet[IP].ttl -= 1
 			sendp(packet, iface=LEG2)
-	    else:
-            packet[Ether].src = LEG1_MAC
-            packet[Ether].dst = ALICE_MAC
-            if IP in packet:
-                packet[IP].dst = ALICE_IP
-                packet[IP].ttl -= 1
-            sendp(packet, iface=LEG1)
+		else:
+			packet[Ether].src = LEG1_MAC
+			packet[Ether].dst = ALICE_MAC
+			if IP in packet:
+				packet[IP].dst = ALICE_IP
+				packet[IP].ttl -= 1
+			sendp(packet, iface=LEG1)
 
 
 def main() -> None:
-    proxy()
+	proxy()
 
 if __name__ == "__main__":
-    main()
+	main()
