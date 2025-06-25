@@ -23,6 +23,7 @@ def handle_alice_packet(packet: scapy.packet) -> None:
 	packet[Ether].dst = BOB_MAC
 	if IP in packet:
 		packet[IP].src = LEG2_IP
+		packet[IP].dst = BOB_IP
 		packet[IP].ttl -= 1
 	sendp(packet, iface=LEG2)
 
