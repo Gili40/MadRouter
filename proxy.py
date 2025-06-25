@@ -13,28 +13,42 @@ LEG2_IP = "192.168.2.1"
 ALICE_IP = "192.168.1.2"
 BOB_IP = "192.168.2.2"
 
+
+def handle_alice_packet(packet: scapy.packet) -> None:
+	"""
+	Handle a packet sent from Alice.
+	:param packet: The packet sent from Alice.
+	"""
+	packet[Ether].src = LEG2_MAC
+	packet[Ether].dst = BOB_MAC
+	if IP in packet:
+		packet[IP].src = LEG2_IP
+		packet[IP].ttl -= 1
+	sendp(packet, iface=LEG2)
+
+def handle_outside_packet(packet: scapy.packet) -> None:
+	"""
+	Handle a packet sent from Bob (Or anyone else).
+	:param packet: The packet sent from Bob.
+	"""
+	packet[Ether].src = LEG1_MAC
+	packet[Ether].dst = ALICE_MAC
+	if IP in packet:
+		packet[IP].dst = ALICE_IP
+		packet[IP].ttl -= 1
+	sendp(packet, iface=LEG1)
+
+
 def proxy() -> None:
 	"""
 	Act as proxy server to hide Alice IP addr.
 	"""
 	while True:
-		packet = sniff(iface=[LEG1, LEG2], filter=f"ip dst {LEG1_IP} or ip dst {LEG2_IP}", count=1)[0]
+		packet = sniff(iface=[LEG1, LEG2], count=1)[0]
 		if packet.sniffed_on == LEG1:
-			# Assuming Alice is behind leg1
-			packet[Ether].src = LEG2_MAC
-			packet[Ether].dst = BOB_MAC
-			if IP in packet:
-				packet[IP].src = LEG2_IP
-				packet[IP].dst = BOB_IP
-				packet[IP].ttl -= 1
-			sendp(packet, iface=LEG2)
+			handle_alice_packet(packet)
 		else:
-			packet[Ether].src = LEG1_MAC
-			packet[Ether].dst = ALICE_MAC
-			if IP in packet:
-				packet[IP].dst = ALICE_IP
-				packet[IP].ttl -= 1
-			sendp(packet, iface=LEG1)
+			handle_outside_packet(packet)
 
 
 def main() -> None:
